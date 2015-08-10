@@ -288,6 +288,7 @@ namespace Oxide.Plugins
         void SendHelp(BasePlayer player)
         {
             SendChatMessage(player, "Timed Notification", "/notification add <DD/MM/YY> <HH:MM> \"<MESSAGE>\" - To schedule a notification for the specified time");
+            SendChatMessage(player, "Timed Notification", "/notification addcmd <DD/MM/YY> <HH:MM> \"<COMMAND>\" - To schedule a console command for the specified time");
             SendChatMessage(player, "Timed Notification", "/notification list - List Future Events");
             SendChatMessage(player, "Timed Notification", "/notification reset - Remove Current and Past Events");
         }
