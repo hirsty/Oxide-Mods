@@ -1,4 +1,5 @@
-﻿using Oxide.Core.Plugins;
+﻿using Facepunch;
+using Oxide.Core.Plugins;
 using System;
 
 namespace Oxide.Plugins
@@ -7,7 +8,7 @@ namespace Oxide.Plugins
     [Description("This will allow players to express their feelings!")]
     class Emote : RustPlugin
     {
-        public static string version = "1.0.2";
+        public static string version = "1.0.3";
         public string template = "";
         public string EnableEmotes = "false";
         #region Config Data
@@ -65,6 +66,7 @@ namespace Oxide.Plugins
 
         private void LoadConfigData()
         {
+            if (!permission.PermissionExists("canemote")) permission.RegisterPermission("canemote", this);
             if (Config["Plugin", "Version"].ToString() != version)
             {
                 Puts("Uh oh! Not up to date! No Worries, lets update you!");
@@ -146,20 +148,27 @@ namespace Oxide.Plugins
         [ChatCommand("me")] // Whatever cammand you want the player to type
         private void TheFunction(BasePlayer player, string command, string[] args)
         {
-            string full = string.Join(" ", args);
-            SendChatMessage(player, full);
+            string uid = Convert.ToString(player.userID);
+            if (permission.UserHasPermission(uid, "canemote"))
+            {
+                string full = string.Join(" ", args);
+                SendChatMessage(player, full);
+            } else
+            {
+                SendReply(player, "Sorry! You don't have permission to use that command!");
+            }
         }
         #endregion
         object OnPlayerChat(ConsoleSystem.Arg arg)
         {
-            
+
+            BasePlayer player = (BasePlayer)arg.connection.player;
             //string message = arg.GetString(0, "text");
             string message = arg.GetString(0);
-           
-            if (Config["Emotes", message] != null && EnableEmotes == "true")
+            string uid = Convert.ToString(player.userID);
+            if (Config["Emotes", message] != null && EnableEmotes == "true" && permission.UserHasPermission(uid, "canemote"))
             {
                 
-                BasePlayer player = (BasePlayer)arg.connection.player;
                 SendChatMessage(player, Config["Emotes", message].ToString());
                 return false;
                
