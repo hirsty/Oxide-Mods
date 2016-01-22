@@ -1,6 +1,7 @@
 ﻿using Facepunch;
 using Oxide.Core.Plugins;
 using System;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
@@ -182,6 +183,7 @@ namespace Oxide.Plugins
             build = build.Replace("{Player}", player.displayName);
             build = build.Replace("{Message}", msg);
             ConsoleSystem.Broadcast("chat.add", player.userID, build, 1.0);
+            Debug.Log(player.displayName + " emoted: " + msg);
             PrintToConsole(player, build); 
         }
     }
