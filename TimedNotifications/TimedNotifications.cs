@@ -8,11 +8,11 @@ using Oxide.Game.Rust.Libraries;
 
 namespace Oxide.Plugins
 {
-    [Info("Timed Notifications", "Hirsty", "0.0.2", ResourceId = 1277)]
+    [Info("Timed Notifications", "Hirsty", "0.0.4", ResourceId = 1277)]
     [Description("Depending on Preset Times, this plugin will display a popup with a notification.")]
     class TimedNotifications : RustPlugin
     {
-        public static string version = "0.0.2";
+        public static string version = "0.0.4";
         public bool PopUpNotifier = true;
         public string[] days;
         public string TZ;
@@ -38,24 +38,79 @@ namespace Oxide.Plugins
             public string EventInfo;
             public string CommandLine;
             public bool broadcast;
+            public string Schedule;
             public EventData()
             {
 
             }
             public EventData(DateTime Date, string info, string EventType = null)
             {
-                this.EventDate = Date;
+                this.EventDate = Date.ToUniversalTime();
                 this.broadcast = false;
-                if(EventType == "notification")
+                switch (EventType.ToLower())
                 {
-                    this.EventInfo = info;
-                    this.CommandLine = "";
-                } else if(EventType == "cmd")
-                {
-                    this.EventInfo = "";
-                    this.CommandLine = info;
+                    case "add":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "none";
+                        break;
+                    case "cmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "none";
+                        break;
+                    case "hourly":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "hourly";
+                        break;
+                    case "daily":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "daily";
+                        break;
+                    case "weekly":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "weekly";
+                        break;
+                    case "monthly":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "monthly";
+                        break;
+                    case "yearly":
+                        this.EventInfo = info;
+                        this.CommandLine = "";
+                        this.Schedule = "yearly";
+                        break;
+                    case "hourlycmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "hourly";
+                        break;
+                    case "dailycmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "daily";
+                        break;
+                    case "weeklycmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "weekly"; 
+                        break;
+                    case "monthlycmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "monthly";
+                        break;
+                    case "yearlycmd":
+                        this.EventInfo = "";
+                        this.CommandLine = info;
+                        this.Schedule = "yearly";
+                        break;
                 }
-            }
+            }      
         }
         StoredData storedData;
         protected override void LoadDefaultConfig() {
@@ -93,10 +148,23 @@ namespace Oxide.Plugins
                         Puts("Updating your Data File! Hang On!");
                         foreach (var storedEvent in storedData.Events)
                         {
-                           
+
                             if (storedEvent.CommandLine == null)
                             {
                                 storedEvent.CommandLine = "";
+                            }
+                        }
+                        Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
+                        break;
+                    case "0.0.3":
+                        Config["Plugin", "Version"] = version;
+                        Puts("Updating your Data File! Hang On!");
+                        foreach (var storedEvent in storedData.Events)
+                        {
+
+                            if (storedEvent.Schedule == null)
+                            {
+                                storedEvent.Schedule = "none";
                             }
                         }
                         Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
@@ -157,8 +225,12 @@ namespace Oxide.Plugins
                                 if (!storedEvent.broadcast)
                                 {
                                     count++;
-                                    SendChatMessage(player, "", count + "- (D: " + storedEvent.EventDate.Day + "/" + storedEvent.EventDate.Month + "/" + storedEvent.EventDate.Year + " T: " + storedEvent.EventDate.Hour + ":" + storedEvent.EventDate.Minute + ") " + storedEvent.EventInfo);
+                                    SendChatMessage(player, "", "ID: " +count + " - (D: " + storedEvent.EventDate.Day + "/" + storedEvent.EventDate.Month + "/" + storedEvent.EventDate.Year + " T: " + storedEvent.EventDate.Hour + ":" + storedEvent.EventDate.Minute + "[UTC]) " + storedEvent.EventInfo);
                                 }
+                            }
+                            if(count == 0)
+                            {
+                                SendChatMessage(player, "Timed Notifications", "No notifications planned! Time for some Planning!");
                             }
                                 break;
                         case "reset":
@@ -175,32 +247,25 @@ namespace Oxide.Plugins
                 case 2:
                 case 3:
                 case 4:
-                    switch (args[0])
+                    switch (args[0].ToLower())
                     {
                         case "add":
-                            string[] datepart = args[1].Split(sep);
-                            string[] timepart = args[2].Split(sep2);
-                            try
-                            {
-                                setDate = new DateTime(datepart[2].ToInt(), datepart[1].ToInt(), datepart[0].ToInt(), timepart[0].ToInt(), timepart[1].ToInt(), 0);
-                            }
-                            catch
-                            {
-                                SendHelp(player);
-                            }
-
-                            string eventinfo = args[3];
-                            var info = new EventData(setDate, eventinfo, "notification");
-                            storedData.Events.Add(info);
-                            SendChatMessage(player, "Timed Notifications", "Event Saved");
-                            Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
-                            break;
+                        case "hourly":
+                        case "daily":
+                        case "weekly":
+                        case "monthly":
+                        case "yearly":
                         case "addcmd":
+                        case "hourlycmd":
+                        case "dailycmd":
+                        case "weeklycmd":
+                        case "monthlycmd":
+                        case "yearlycmd":
                             string[] datepart2 = args[1].Split(sep);
                             string[] timepart2 = args[2].Split(sep2);
                             try
                             {
-                                setDate = new DateTime(datepart2[2].ToInt(), datepart2[1].ToInt(), datepart2[0].ToInt(), timepart2[0].ToInt(), timepart2[1].ToInt(), 0);
+                                setDate = new DateTime(datepart2[2].ToInt(), datepart2[1].ToInt(), datepart2[0].ToInt(), timepart2[0].ToInt(), timepart2[1].ToInt(), 0).ToUniversalTime();
                             }
                             catch
                             {
@@ -208,28 +273,29 @@ namespace Oxide.Plugins
                             }
 
                             string cmdinfo = args[3];
-                            var infocmd = new EventData(setDate, cmdinfo,"cmd");
+                            EventData infocmd = new EventData(setDate, cmdinfo, args[0]);
                             storedData.Events.Add(infocmd);
                             SendChatMessage(player, "Timed Notifications", "Event Saved");
                             Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
                             break;
-                        //                        case "remove":
+                        case "remove":
 
-                        // List Notifications
-                        //                            int count = 0;
-                        //                            foreach (var storedEvent in storedData.Events)
-                        //                            {
-                        //                                if (!storedEvent.broadcast)
-                        //                                {
-                        //                                    count++;
-                        //                                    if(count.ToString() == args[1])
-                        //                                    {
-                        //                                        storedEvent.broadcast = false;
-                        //                                  }
-                        //                               }
-                        //                            }
-                        //                            Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
-                        //                            break;
+// List Notifications
+                            int count = 0;
+                            foreach (EventData storedEvent in storedData.Events)
+                            {
+                                if (!storedEvent.broadcast)
+                                {
+                                    count++;
+                                    if(count.ToString() == args[1])
+                                    {
+                                        storedEvent.broadcast = true;
+                                        Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
+                                    }
+                                }
+                            }
+                            SendChatMessage(player, "Timed Notifications", "Event Removed");
+                            break;
                         default:
                             SendHelp(player);
                             break;
@@ -249,48 +315,80 @@ namespace Oxide.Plugins
             } else {
                 foreach(var storedEvent in storedData.Events)
                 {
-                    if(storedEvent.EventDate.Date <= DateTime.UtcNow.Date && !storedEvent.broadcast)
+                    if(storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime() && !storedEvent.broadcast)
                     {
+                        Puts(storedEvent.EventDate.Date.ToUniversalTime() + " <= " + DateTime.Now.ToUniversalTime());
                         if (storedEvent.CommandLine == "")
                         {
                             SendNotification(storedEvent.EventInfo, Convert.ToInt16(Config["Plugin", "PopUpTime"]));
                         } else
                         {
-                            /// WIP
                             var rust = new Oxide.Game.Rust.Libraries.Rust();
-                            
-                            string args = storedEvent.CommandLine.Remove(0,storedEvent.CommandLine.IndexOf(" ") +1);
+                            string args = "";
+                            string command = "";
+                            try
+                            {
+                                args = storedEvent.CommandLine.Remove(0, storedEvent.CommandLine.IndexOf(" ") + 1);
 
-                            string command = storedEvent.CommandLine.Substring(0, storedEvent.CommandLine.IndexOf(" "));
+                                command = storedEvent.CommandLine.Substring(0, storedEvent.CommandLine.IndexOf(" "));
+                            } catch
+                            {
+                                command = storedEvent.CommandLine;
+                            }
                             rust.RunServerCommand(command, args);
                         }
-                        storedEvent.broadcast = true;
-                        Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
-                    }
-
-                    if (storedEvent.EventDate.Date <= DateTime.UtcNow.Date && !storedEvent.broadcast)
-                    {
-                        if (storedEvent.EventDate.Hour <= DateTime.UtcNow.Hour && !storedEvent.broadcast)
+                        switch (storedEvent.Schedule.ToLower())
                         {
-                            if (storedEvent.EventDate.Minute <= DateTime.UtcNow.Minute && !storedEvent.broadcast)
-                            {
-                                SendNotification(storedEvent.EventInfo, Convert.ToInt16(Config["Plugin", "PopUpTime"]));
+                            case "hourly":
+                                while (storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime())
+                                {
+                                    storedEvent.EventDate = storedEvent.EventDate.AddHours(1);
+                                    Puts("NotifyFired");
+                                }
+                                break;
+                            case "daily":
+                                while (storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime())
+                                {
+                                    storedEvent.EventDate = storedEvent.EventDate.AddDays(1);
+                                }
+                                break;
+                            case "weekly":
+                                while (storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime())
+                                {
+                                    storedEvent.EventDate = storedEvent.EventDate.AddDays(7);
+                                }
+                                break;
+                            case "monthly":
+                                while (storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime())
+                                {
+                                    storedEvent.EventDate = storedEvent.EventDate.AddMonths(1);
+                                }
+                                break;
+                            case "yearly":
+                                while (storedEvent.EventDate.Date.ToUniversalTime() <= DateTime.Now.ToUniversalTime())
+                                {
+                                    storedEvent.EventDate = storedEvent.EventDate.AddYears(1);
+                                }
+                                break;
+                            default:
                                 storedEvent.broadcast = true;
-                                Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
-                            }
+                                break;
                         }
+                        Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
                     }
                 }
                 // Check for Events on that day
+                Interface.GetMod().DataFileSystem.WriteObject("MyEvents", storedData);
 
             }
         }
         void SendHelp(BasePlayer player)
         {
-            SendChatMessage(player, "Timed Notification", "/notification add <DD/MM/YY> <HH:MM> \"<MESSAGE>\" - To schedule a notification for the specified time");
-            SendChatMessage(player, "Timed Notification", "/notification addcmd <DD/MM/YY> <HH:MM> \"<COMMAND>\" - To schedule a console command for the specified time");
-            SendChatMessage(player, "Timed Notification", "/notification list - List Future Events");
-            SendChatMessage(player, "Timed Notification", "/notification reset - Remove Current and Past Events");
+            SendChatMessage(player, "", "/notification (add|hourly|daily|weekly|monthly|yearly) <DD/MM/YY> <HH:MM> \"<MESSAGE>\" - To schedule a notification for the specified time");
+            SendChatMessage(player, "", "/notification (addcmd|hourlycmd|dailycmd|weeklycmd|monthlycmd|yearlycmd) <DD/MM/YY> <HH:MM> \"<COMMAND>\" - To schedule a console command for the specified time");
+            SendChatMessage(player, "", "/notification list - List Future Events");
+            SendChatMessage(player, "", "/notification reset - Remove Current and Past Events");
+            SendChatMessage(player, "", "/notification remove <ID> - Removes specified event - IDs will alter on removal");
         }
         //---------------------------->   Chat Sending   <----------------------------//
         void SendNotification(string message, int delay=5,BasePlayer player=null)
@@ -318,7 +416,14 @@ namespace Oxide.Plugins
         }
         void SendChatMessage(BasePlayer player, string prefix, string msg)
         {
-            SendReply(player, "<color=orange>" + prefix + "</color>: " + msg);
+            if (prefix != "")
+            {
+                prefix = "<color=orange>" + prefix + "</color>: ";
+            } else
+            {
+                prefix = "";
+            }
+            SendReply(player, prefix + msg);
         }
         //---------------------------------------------------------------------------//
     }
