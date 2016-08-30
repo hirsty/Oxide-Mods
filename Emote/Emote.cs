@@ -148,7 +148,7 @@ namespace Oxide.Plugins
 
                 string build = template;
                 build = build.Replace("{Player}", player.Name);
-                build = build.Replace("{Message}", checkmsg);
+                build = build.Replace("{Message}",  emote);
                 return build;
             }
             else
